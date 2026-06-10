@@ -1,0 +1,116 @@
+// Prisma schema for guard duty (שבצ"ק) scheduling app
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Soldier {
+  id          String                  @id @default(cuid())
+  name        String
+  personalId  String?                 @unique // מספר אישי
+  color       String // hex color
+  phone       String?
+  active      Boolean                 @default(true)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  preferences SlotPreference[]
+  submissions SoldierWeekSubmission[]
+  notes       SoldierWeekNote[]
+  assignments Assignment[]
+}
+
+model Position {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  displayOrder Int          @default(0)
+  assignments  Assignment[]
+}
+
+// אילוץ פר-תא: שחור (BLACK) = לא יכול, ירוק (GREEN) = רוצה
+model SlotPreference {
+  id            String   @id @default(cuid())
+  soldierId     String
+  soldier       Soldier  @relation(fields: [soldierId], references: [id], onDelete: Cascade)
+  weekStartDate DateTime // Sunday 00:00 IL aligned (כמו Schedule.weekStartDate)
+  dayIndex      Int      // 0..6 (Sunday=0)
+  hour          Int      // 2, 6, 10, 14, 18, 22
+  kind          String   // BLACK | GREEN
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([soldierId, weekStartDate, dayIndex, hour])
+  @@index([weekStartDate])
+  @@index([soldierId, weekStartDate])
+}
+
+// הערות/העדפות חופשיות שחייל רושם לשבוע
+model SoldierWeekNote {
+  id            String   @id @default(cuid())
+  soldierId     String
+  soldier       Soldier  @relation(fields: [soldierId], references: [id], onDelete: Cascade)
+  weekStartDate DateTime
+  text          String
+  updatedAt     DateTime @updatedAt
+
+  @@unique([soldierId, weekStartDate])
+  @@index([weekStartDate])
+}
+
+// תיעוד שחייל הגיש סופית את האילוצים לשבוע מסוים
+model SoldierWeekSubmission {
+  id            String   @id @default(cuid())
+  soldierId     String
+  soldier       Soldier  @relation(fields: [soldierId], references: [id], onDelete: Cascade)
+  weekStartDate DateTime
+  submittedAt   DateTime @default(now())
+
+  @@unique([soldierId, weekStartDate])
+  @@index([weekStartDate])
+}
+
+model Schedule {
+  id                  String       @id @default(cuid())
+  weekStartDate       DateTime     @unique // Sunday at 00:00 IL
+  status              String       @default("DRAFT") // DRAFT | PUBLISHED
+  version             Int          @default(1)
+  // חלון אילוצים
+  constraintsState    String       @default("NOT_OPENED") // NOT_OPENED | OPEN | LOCKED
+  constraintsOpenedAt DateTime?
+  constraintsLockedAt DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  assignments         Assignment[]
+}
+
+model Assignment {
+  id         String   @id @default(cuid())
+  scheduleId String
+  schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  date       DateTime // start datetime of the shift
+  startHour  Int // 2, 6, 10, 14, 18, 22
+  positionId String
+  position   Position @relation(fields: [positionId], references: [id])
+  soldierId  String?
+  soldier    Soldier? @relation(fields: [soldierId], references: [id])
+  locked     Boolean  @default(false) // pinned manually, preserved by auto-generate
+  updatedAt  DateTime @updatedAt
+
+  @@unique([scheduleId, date, startHour, positionId])
+  @@index([soldierId])
+  @@index([date])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actor       String // "admin" or soldier name
+  action      String
+  beforeState String? // JSON
+  afterState  String? // JSON
+  timestamp   DateTime @default(now())
+}
