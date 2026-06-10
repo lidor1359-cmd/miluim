@@ -220,9 +220,6 @@ export function ConstraintsDashboard({ weekStartIso, initialData }: Props) {
                     <span className="font-medium underline-offset-2 hover:underline">
                       {s.name}
                     </span>
-                    <span className="font-mono text-xs text-muted-foreground">
-                      · {s.personalId || "—"}
-                    </span>
                   </button>
                   <div className="flex items-center gap-3 text-sm">
                     <span className="text-slate-700">⬛ {s.blackCount}</span>
@@ -293,9 +290,6 @@ export function ConstraintsDashboard({ weekStartIso, initialData }: Props) {
                       }`}
                     >
                       {s.name}
-                    </span>
-                    <span className="font-mono text-xs text-muted-foreground">
-                      · {s.personalId || "—"}
                     </span>
                   </>
                 );
