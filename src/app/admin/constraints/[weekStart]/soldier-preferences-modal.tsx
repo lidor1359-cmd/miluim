@@ -1,14 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSoldierPreferences, getSoldierNote } from "@/actions/constraints";
+import {
+  getSoldierPreferences,
+  getSoldierNote,
+  adminTogglePreference,
+  adminSaveSoldierNote,
+  deleteSoldierConstraints,
+} from "@/actions/constraints";
 import {
   SHIFT_HOURS,
   DAY_NAMES_HE,
   DAYS_IN_WEEK,
 } from "@/lib/scheduler/types";
 import { Button } from "@/components/ui/button";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Trash2, Save, Pencil } from "lucide-react";
 import { format } from "date-fns";
 
 interface Pref {
@@ -24,6 +30,7 @@ interface Props {
   color: string;
   weekStartIso: string;
   onClose: () => void;
+  onMutate?: () => void;
 }
 
 export function SoldierPreferencesModal({
@@ -33,26 +40,34 @@ export function SoldierPreferencesModal({
   color,
   weekStartIso,
   onClose,
+  onMutate,
 }: Props) {
   const [prefs, setPrefs] = useState<Pref[] | null>(null);
   const [note, setNote] = useState<string>("");
+  const [editMode, setEditMode] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const weekStartMs = new Date(weekStartIso).getTime();
+
+  async function load() {
+    const [data, noteText] = await Promise.all([
+      getSoldierPreferences(soldierId, weekStartIso),
+      getSoldierNote(soldierId, weekStartIso),
+    ]);
+    setPrefs(
+      data.map((p) => ({
+        dayIndex: p.dayIndex,
+        hour: p.hour,
+        kind: p.kind,
+      }))
+    );
+    setNote(noteText);
+  }
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      getSoldierPreferences(soldierId, weekStartIso),
-      getSoldierNote(soldierId, weekStartIso),
-    ]).then(([data, noteText]) => {
+    load().then(() => {
       if (cancelled) return;
-      setPrefs(
-        data.map((p) => ({
-          dayIndex: p.dayIndex,
-          hour: p.hour,
-          kind: p.kind,
-        }))
-      );
-      setNote(noteText);
     });
     return () => {
       cancelled = true;
@@ -84,6 +99,49 @@ export function SoldierPreferencesModal({
     };
   });
 
+  async function handleCellClick(dayIndex: number, hour: number) {
+    if (!editMode) return;
+    setSaving(true);
+    try {
+      const res = await adminTogglePreference(soldierId, weekStartIso, dayIndex, hour);
+      if (res.error) {
+        alert(res.error);
+      } else {
+        await load();
+        onMutate?.();
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveNote() {
+    setSaving(true);
+    try {
+      await adminSaveSoldierNote(soldierId, weekStartIso, note);
+      await load();
+      onMutate?.();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm(`למחוק את כל האילוצים של ${soldierName}?`)) return;
+    setDeleting(true);
+    try {
+      const res = await deleteSoldierConstraints(soldierId, weekStartIso);
+      if ("error" in res) {
+        alert(res.error);
+      } else {
+        onMutate?.();
+        onClose();
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3"
@@ -108,9 +166,33 @@ export function SoldierPreferencesModal({
               </div>
             </div>
           </div>
-          <Button size="sm" variant="ghost" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={editMode ? "default" : "outline"}
+              onClick={() => setEditMode((v) => !v)}
+              disabled={saving || deleting}
+            >
+              {editMode ? <Save className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+              <span className="mr-1">{editMode ? "סיום עריכה" : "ערוך"}</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={saving || deleting}
+            >
+              {deleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              <span className="mr-1">מחק</span>
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Body */}
@@ -127,6 +209,11 @@ export function SoldierPreferencesModal({
                   <span className="inline-block h-3 w-3 rounded bg-slate-900" />
                   <span>שחור (לא יכול) — {blackCount}</span>
                 </span>
+                {editMode && (
+                  <span className="text-xs text-blue-600 font-medium">
+                    לחץ על תא כדי להוסיף/להסיר אילוץ
+                  </span>
+                )}
               </div>
 
               <div className="overflow-x-auto">
@@ -161,11 +248,15 @@ export function SoldierPreferencesModal({
                             const bg =
                               kind === "BLACK"
                                 ? "bg-slate-900 text-white"
+                                : editMode
+                                ? "bg-white hover:bg-slate-100 cursor-pointer"
                                 : "bg-white";
                             return (
                               <td
                                 key={d.dayIndex}
-                                className={`border h-10 ${bg}`}
+                                className={`border h-10 ${bg} ${editMode ? "transition" : ""}`}
+                                onClick={() => handleCellClick(d.dayIndex, h)}
+                                title={editMode ? "לחץ לשינוי" : ""}
                               >
                                 {kind === "BLACK" && (
                                   <X className="mx-auto h-4 w-4" />
@@ -183,7 +274,29 @@ export function SoldierPreferencesModal({
               {/* Note / free-text preferences */}
               <div className="space-y-1.5">
                 <div className="text-sm font-medium">הערות / העדפות</div>
-                {note.trim() ? (
+                {editMode ? (
+                  <div className="space-y-2">
+                    <textarea
+                      className="w-full rounded-md border p-3 text-sm leading-relaxed"
+                      rows={4}
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="הערות החייל..."
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleSaveNote}
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      <span className="mr-1">שמור הערה</span>
+                    </Button>
+                  </div>
+                ) : note.trim() ? (
                   <div
                     dir="rtl"
                     className="whitespace-pre-wrap rounded-md border bg-slate-50 p-3 text-sm leading-relaxed text-slate-800"

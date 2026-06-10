@@ -8,8 +8,9 @@ import {
   lockConstraintsWindow,
   reopenConstraintsWindow,
   getSubmissionStatus,
+  deleteSoldierConstraints,
 } from "@/actions/constraints";
-import { Unlock, Lock, RefreshCw, Loader2, Check, Clock } from "lucide-react";
+import { Unlock, Lock, RefreshCw, Loader2, Check, Clock, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { SoldierPreferencesModal } from "./soldier-preferences-modal";
 
@@ -42,6 +43,7 @@ export function ConstraintsDashboard({ weekStartIso, initialData }: Props) {
   const [selectedSoldier, setSelectedSoldier] = useState<SoldierStatus | null>(
     null
   );
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Live polling every 3 seconds when window is OPEN
   useEffect(() => {
@@ -63,6 +65,17 @@ export function ConstraintsDashboard({ weekStartIso, initialData }: Props) {
   async function refresh() {
     const fresh = await getSubmissionStatus(weekStartIso);
     setData(fresh);
+  }
+
+  async function handleDeleteSoldier(soldier: SoldierStatus) {
+    if (!confirm(`למחוק את כל האילוצים של ${soldier.name}?`)) return;
+    setDeletingId(soldier.id);
+    try {
+      await deleteSoldierConstraints(soldier.id, weekStartIso);
+      await refresh();
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   function handleOpen() {
@@ -213,6 +226,22 @@ export function ConstraintsDashboard({ weekStartIso, initialData }: Props) {
                   </button>
                   <div className="flex items-center gap-3 text-sm">
                     <span className="text-slate-700">⬛ {s.blackCount}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSoldier(s);
+                      }}
+                      disabled={deletingId === s.id}
+                      className="text-red-600 hover:text-red-800 transition disabled:opacity-50"
+                      title="מחק אילוצים"
+                    >
+                      {deletingId === s.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
                     {s.submittedAt && (() => {
                       const sub = new Date(s.submittedAt);
                       const ageSec = (Date.now() - sub.getTime()) / 1000;
@@ -319,6 +348,7 @@ export function ConstraintsDashboard({ weekStartIso, initialData }: Props) {
           color={selectedSoldier.color}
           weekStartIso={weekStartIso}
           onClose={() => setSelectedSoldier(null)}
+          onMutate={refresh}
         />
       )}
     </>

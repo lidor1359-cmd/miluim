@@ -398,3 +398,122 @@ export async function getSoldierPreferences(
     where: { soldierId, weekStartDate: ws },
   });
 }
+
+/**
+ * Admin: delete all constraints (preferences, submission, note) for a soldier in a week.
+ */
+export async function deleteSoldierConstraints(
+  soldierId: string,
+  weekStartIso: string
+): Promise<{ success: true } | { error: string }> {
+  try {
+    const ws = getWeekStart(new Date(weekStartIso));
+    await prisma.$transaction([
+      prisma.slotPreference.deleteMany({
+        where: { soldierId, weekStartDate: ws },
+      }),
+      prisma.soldierWeekSubmission.deleteMany({
+        where: { soldierId, weekStartDate: ws },
+      }),
+      prisma.soldierWeekNote.deleteMany({
+        where: { soldierId, weekStartDate: ws },
+      }),
+    ]);
+    revalidatePath("/c");
+    revalidatePath("/admin/constraints");
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "שגיאה במחיקת האילוצים" };
+  }
+}
+
+/**
+ * Admin: toggle a preference cell for any soldier, bypassing window state and submission checks.
+ */
+export async function adminTogglePreference(
+  soldierId: string,
+  weekStartIso: string,
+  dayIndex: number,
+  hour: number
+) {
+  if (!isValidSlot(dayIndex, hour)) return { error: "תא לא תקין" };
+  const ws = getWeekStart(new Date(weekStartIso));
+
+  const existing = await prisma.slotPreference.findUnique({
+    where: {
+      soldierId_weekStartDate_dayIndex_hour: {
+        soldierId,
+        weekStartDate: ws,
+        dayIndex,
+        hour,
+      },
+    },
+  });
+
+  // Admin cycle: null → BLACK → null
+  const next: PreferenceKind | null = existing ? null : "BLACK";
+
+  if (next === "BLACK") {
+    const count = await prisma.slotPreference.count({
+      where: { soldierId, weekStartDate: ws, kind: "BLACK" },
+    });
+    if (count >= MAX_BLACK) {
+      return { error: `הגעת לתקרה של ${MAX_BLACK} תאים שחורים` };
+    }
+  }
+
+  if (next === null) {
+    if (existing) {
+      await prisma.slotPreference.delete({ where: { id: existing.id } });
+    }
+  } else if (existing) {
+    await prisma.slotPreference.update({
+      where: { id: existing.id },
+      data: { kind: next },
+    });
+  } else {
+    await prisma.slotPreference.create({
+      data: {
+        soldierId,
+        weekStartDate: ws,
+        dayIndex,
+        hour,
+        kind: next,
+      },
+    });
+  }
+
+  revalidatePath("/c");
+  revalidatePath("/admin/constraints");
+  return { success: true, kind: next };
+}
+
+/**
+ * Admin: save (upsert) a note for a soldier for a week, bypassing window state checks.
+ */
+export async function adminSaveSoldierNote(
+  soldierId: string,
+  weekStartIso: string,
+  text: string
+): Promise<{ success: true } | { error: string }> {
+  try {
+    const ws = getWeekStart(new Date(weekStartIso));
+    const trimmed = (text ?? "").slice(0, 2000);
+    await prisma.soldierWeekNote.upsert({
+      where: {
+        soldierId_weekStartDate: { soldierId, weekStartDate: ws },
+      },
+      create: {
+        soldierId,
+        weekStartDate: ws,
+        text: trimmed,
+      },
+      update: { text: trimmed },
+    });
+    revalidatePath("/c");
+    revalidatePath("/admin/constraints");
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "שגיאה בשמירת ההערה" };
+  }
+}
