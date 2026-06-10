@@ -20,7 +20,7 @@ interface Props {
   initialSubmitted: boolean;
   initialSubmittedAt: string | null;
   initialNote: string;
-  limits: { maxBlack: number; maxGreen: number };
+  limits: { maxGreen: number };
 }
 
 export function PreferenceGrid(props: Props) {

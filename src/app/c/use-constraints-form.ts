@@ -21,7 +21,7 @@ export interface ConstraintsFormInput {
   initialPreferences: PrefItem[];
   initialSubmitted: boolean;
   initialSubmittedAt: string | null;
-  limits: { maxBlack: number; maxGreen: number };
+  limits: { maxGreen: number };
 }
 
 export function keyOf(dayIndex: number, hour: number): string {
@@ -61,11 +61,6 @@ export function useConstraintsForm(input: ConstraintsFormInput) {
     const current = prefs.get(k);
 
     const next: Kind | null = current ? null : "BLACK";
-
-    if (next === "BLACK" && blackCount >= input.limits.maxBlack) {
-      setErrorMsg(`הגעת לתקרה של ${input.limits.maxBlack} תאים שחורים`);
-      return;
-    }
 
     setErrorMsg(null);
     setPrefs((prev) => {

@@ -6,7 +6,6 @@ import { getWeekStart } from "@/lib/dates";
 import { SHIFT_HOURS } from "@/lib/scheduler/types";
 import { getCurrentSoldierId } from "@/lib/soldier-session";
 
-const MAX_BLACK = 20;
 const MAX_GREEN = 10;
 type PreferenceKind = "BLACK" | "GREEN";
 
@@ -105,7 +104,7 @@ export async function getSoldierConstraintView(weekStart: Date) {
     submitted: !!submission,
     submittedAt: submission?.submittedAt.toISOString() ?? null,
     note: note?.text ?? "",
-    limits: { maxBlack: MAX_BLACK, maxGreen: MAX_GREEN },
+    limits: { maxGreen: MAX_GREEN },
   };
 }
 
@@ -153,15 +152,6 @@ export async function togglePreference(
 
   // Cycle: null → BLACK → null
   const next: PreferenceKind | null = existing ? null : "BLACK";
-
-  if (next === "BLACK") {
-    const count = await prisma.slotPreference.count({
-      where: { soldierId: soldier.id, weekStartDate: ws, kind: "BLACK" },
-    });
-    if (count >= MAX_BLACK) {
-      return { error: `הגעת לתקרה של ${MAX_BLACK} תאים שחורים` };
-    }
-  }
 
   if (next === null) {
     if (existing) {
@@ -452,15 +442,6 @@ export async function adminTogglePreference(
 
   // Admin cycle: null → BLACK → null
   const next: PreferenceKind | null = existing ? null : "BLACK";
-
-  if (next === "BLACK") {
-    const count = await prisma.slotPreference.count({
-      where: { soldierId, weekStartDate: ws, kind: "BLACK" },
-    });
-    if (count >= MAX_BLACK) {
-      return { error: `הגעת לתקרה של ${MAX_BLACK} תאים שחורים` };
-    }
-  }
 
   if (next === null) {
     if (existing) {
