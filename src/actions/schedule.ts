@@ -346,7 +346,7 @@ export async function getSoldierScheduleView(
 
   const weekStartMs = ws.getTime();
   const assignments = schedule.assignments.map((a) => {
-    const dayIndex = Math.round(
+    const dayIndex = Math.floor(
       (a.date.getTime() - weekStartMs) / (24 * 60 * 60 * 1000)
     );
     return {
