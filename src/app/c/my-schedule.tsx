@@ -46,7 +46,7 @@ function fmtRange(h: number) {
 
 export function MySchedule({ view, soldier, prevWeekIso, nextWeekIso }: Props) {
   const weekStart = new Date(view.weekStartIso);
-  const weekEnd = addDays(weekStart, 6);
+  const weekEnd = addDays(weekStart, 7);
 
   const positionById = new Map(view.positions.map((p) => [p.id, p.name]));
 

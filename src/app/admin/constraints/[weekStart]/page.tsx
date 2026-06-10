@@ -23,7 +23,7 @@ export default async function ConstraintsAdminWeekPage({
   const data = await getSubmissionStatus(weekStart.toISOString());
   const prevWeek = formatWeekStartParam(addDays(weekStart, -7));
   const nextWeek = formatWeekStartParam(addDays(weekStart, 7));
-  const endDate = addDays(weekStart, 6);
+  const endDate = addDays(weekStart, 7);
 
   return (
     <div className="space-y-4">

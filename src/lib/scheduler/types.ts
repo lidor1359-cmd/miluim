@@ -9,7 +9,7 @@ export const MIN_REST_HOURS = 8;
 // Gap between start of two consecutive shifts (shift duration + rest)
 export const MIN_GAP_HOURS = SHIFT_DURATION_HOURS + MIN_REST_HOURS; // = 12
 
-export const DAYS_IN_WEEK = 7;
+export const DAYS_IN_WEEK = 8;
 export const DAY_NAMES_HE = [
   "יום ראשון",
   "יום שני",
@@ -18,6 +18,7 @@ export const DAY_NAMES_HE = [
   "יום חמישי",
   "יום שישי",
   "שבת",
+  "יום ראשון",
 ];
 
 export interface SlotKey {

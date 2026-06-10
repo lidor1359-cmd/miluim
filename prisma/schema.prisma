@@ -38,7 +38,7 @@ model SlotPreference {
   soldierId     String
   soldier       Soldier  @relation(fields: [soldierId], references: [id], onDelete: Cascade)
   weekStartDate DateTime // Sunday 00:00 IL aligned (כמו Schedule.weekStartDate)
-  dayIndex      Int      // 0..6 (Sunday=0)
+  dayIndex      Int      // 0..7 (Sunday=0, 7=next Sunday)
   hour          Int      // 2, 6, 10, 14, 18, 22
   kind          String   // BLACK | GREEN
   createdAt     DateTime @default(now())

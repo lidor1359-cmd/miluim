@@ -6,7 +6,7 @@ import { getScheduleData } from "@/actions/schedule";
 import { ScheduleBuilder } from "./schedule-builder";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ChevronLeft, Printer } from "lucide-react";
-import { DAY_NAMES_HE } from "@/lib/scheduler/types";
+import { DAY_NAMES_HE, DAYS_IN_WEEK } from "@/lib/scheduler/types";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export default async function ScheduleWeekPage({
 
   const prevWeek = formatWeekStartParam(addDays(weekStart, -7));
   const nextWeek = formatWeekStartParam(addDays(weekStart, 7));
-  const endDate = addDays(weekStart, 6);
+  const endDate = addDays(weekStart, 7);
 
   return (
     <div className="space-y-4">
@@ -68,7 +68,7 @@ export default async function ScheduleWeekPage({
           color: s.color,
         }))}
         positions={positions.map((p) => ({ id: p.id, name: p.name }))}
-        dayDates={Array.from({ length: 7 }, (_, i) => {
+        dayDates={Array.from({ length: DAYS_IN_WEEK }, (_, i) => {
           const d = getDayDate(weekStart, i);
           return {
             dayIndex: i,

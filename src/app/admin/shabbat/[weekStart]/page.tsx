@@ -23,7 +23,7 @@ export default async function ShabbatTrackingPage({
   const data = await getShabbatTracking(weekStart.toISOString());
   const prevWeek = formatWeekStartParam(addDays(weekStart, -7));
   const nextWeek = formatWeekStartParam(addDays(weekStart, 7));
-  const endDate = addDays(weekStart, 6);
+  const endDate = addDays(weekStart, 7);
 
   // Sort by closedShabbatWeeks asc (those who closed least come first - they should close next)
   const sorted = [...data.soldiers].sort(

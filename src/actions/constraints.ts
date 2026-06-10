@@ -13,7 +13,7 @@ type PreferenceKind = "BLACK" | "GREEN";
 /* ===== Helpers ===== */
 
 function isValidSlot(dayIndex: number, hour: number): boolean {
-  if (!Number.isInteger(dayIndex) || dayIndex < 0 || dayIndex > 6) return false;
+  if (!Number.isInteger(dayIndex) || dayIndex < 0 || dayIndex > 7) return false;
   return (SHIFT_HOURS as readonly number[]).includes(hour);
 }
 

@@ -55,7 +55,7 @@ export function PreferenceGrid(props: Props) {
               {format(new Date(props.weekStartMs), "dd/MM")}
               {" - "}
               {format(
-                new Date(props.weekStartMs + 6 * 24 * 60 * 60 * 1000),
+                new Date(props.weekStartMs + 7 * 24 * 60 * 60 * 1000),
                 "dd/MM"
               )}
             </span>

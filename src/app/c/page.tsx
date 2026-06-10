@@ -33,7 +33,7 @@ async function getOpenConstraintRangeLabel(): Promise<string | null> {
   });
   if (!open) return null;
   const start = open.weekStartDate;
-  const end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
   return `${format(start, "dd/MM")} - ${format(end, "dd/MM")}`;
 }
 

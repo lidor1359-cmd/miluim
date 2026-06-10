@@ -3,7 +3,7 @@ import { parseWeekStartParam, getDayDate } from "@/lib/dates";
 import { format } from "date-fns";
 import { getScheduleData } from "@/actions/schedule";
 import { PrintView } from "./print-view";
-import { DAY_NAMES_HE } from "@/lib/scheduler/types";
+import { DAY_NAMES_HE, DAYS_IN_WEEK } from "@/lib/scheduler/types";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ export default async function PrintPage({
   return (
     <PrintView
       weekStartLabel={`${format(weekStart, "dd/MM/yyyy")} - ${format(
-        new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000),
+        new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000),
         "dd/MM/yyyy"
       )}`}
       soldiers={soldiers.map((s) => ({
@@ -29,7 +29,7 @@ export default async function PrintPage({
         color: s.color,
       }))}
       positions={positions.map((p) => ({ id: p.id, name: p.name }))}
-      dayDates={Array.from({ length: 7 }, (_, i) => {
+      dayDates={Array.from({ length: DAYS_IN_WEEK }, (_, i) => {
         const d = getDayDate(weekStart, i);
         return {
           dayIndex: i,
