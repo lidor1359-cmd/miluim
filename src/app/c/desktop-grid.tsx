@@ -1,6 +1,10 @@
 "use client";
 
-import { keyOf, type ConstraintsForm } from "./use-constraints-form";
+import {
+  keyOf,
+  NAMED_LOCKED_SOLDIERS,
+  type ConstraintsForm,
+} from "./use-constraints-form";
 import {
   SHIFT_HOURS,
   DAY_NAMES_HE,
@@ -61,29 +65,46 @@ export function DesktopGrid({ form, weekStartMs }: Props) {
                   {days.map((d) => {
                     const locked = form.getLocked(d.dayIndex, h);
                     if (locked && locked.length > 0) {
-                      const first = locked[0];
-                      const fg = getContrastText(first.soldierColor);
+                      const named = locked.find((l) =>
+                        NAMED_LOCKED_SOLDIERS.has(l.soldierName)
+                      );
+                      if (named) {
+                        const fg = getContrastText(named.soldierColor);
+                        return (
+                          <td
+                            key={d.dayIndex}
+                            className="border p-0 cursor-not-allowed"
+                            title={named.soldierName}
+                          >
+                            <div
+                              className="flex h-12 w-full flex-col items-center justify-center gap-0.5 px-1"
+                              style={{
+                                backgroundColor: named.soldierColor,
+                                color: fg,
+                              }}
+                            >
+                              <Lock className="h-3 w-3 opacity-70" />
+                              <span className="truncate text-[10px] font-medium leading-tight">
+                                {named.soldierName}
+                              </span>
+                            </div>
+                          </td>
+                        );
+                      }
                       return (
                         <td
                           key={d.dayIndex}
                           className="border p-0 cursor-not-allowed"
-                          title={locked
-                            .map(
-                              (l) => `${l.positionName}: ${l.soldierName}`
-                            )
-                            .join("\n")}
+                          title="משובץ"
                         >
                           <div
-                            className="flex h-12 w-full flex-col items-center justify-center gap-0.5 px-1"
+                            className="flex h-12 w-full items-center justify-center text-slate-600"
                             style={{
-                              backgroundColor: first.soldierColor,
-                              color: fg,
+                              backgroundImage:
+                                "repeating-linear-gradient(45deg, #e2e8f0 0, #e2e8f0 6px, #f1f5f9 6px, #f1f5f9 12px)",
                             }}
                           >
-                            <Lock className="h-3 w-3 opacity-70" />
-                            <span className="truncate text-[10px] font-medium leading-tight">
-                              {first.soldierName}
-                            </span>
+                            <Lock className="h-4 w-4" />
                           </div>
                         </td>
                       );

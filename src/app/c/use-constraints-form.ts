@@ -20,8 +20,9 @@ export interface LockedShift {
   hour: number;
   soldierName: string;
   soldierColor: string;
-  positionName: string;
 }
+
+export const NAMED_LOCKED_SOLDIERS = new Set<string>(["כיפת ברזל"]);
 
 export interface ConstraintsFormInput {
   weekStartIso: string;

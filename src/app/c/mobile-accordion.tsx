@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { keyOf, type ConstraintsForm } from "./use-constraints-form";
+import {
+  keyOf,
+  NAMED_LOCKED_SOLDIERS,
+  type ConstraintsForm,
+} from "./use-constraints-form";
 import {
   SHIFT_HOURS,
   DAY_NAMES_HE,
@@ -99,23 +103,43 @@ export function MobileAccordion({ form, weekStartMs }: Props) {
 
                   const locked = form.getLocked(d.dayIndex, h);
                   if (locked && locked.length > 0) {
-                    const first = locked[0];
-                    const fg = getContrastText(first.soldierColor);
+                    const named = locked.find((l) =>
+                      NAMED_LOCKED_SOLDIERS.has(l.soldierName)
+                    );
+                    if (named) {
+                      const fg = getContrastText(named.soldierColor);
+                      return (
+                        <div
+                          key={h}
+                          className="flex h-14 w-full items-center justify-between gap-3 rounded-lg border-2 px-4"
+                          style={{
+                            backgroundColor: named.soldierColor,
+                            color: fg,
+                            borderColor: named.soldierColor,
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Lock className="h-4 w-4 opacity-80" />
+                            <span className="text-sm font-medium">
+                              {named.soldierName}
+                            </span>
+                          </div>
+                          <span className="font-mono text-sm">{timeLabel}</span>
+                        </div>
+                      );
+                    }
                     return (
                       <div
                         key={h}
-                        className="flex h-14 w-full items-center justify-between gap-3 rounded-lg border-2 px-4"
+                        className="flex h-14 w-full items-center justify-between gap-3 rounded-lg border-2 border-slate-300 px-4 text-slate-600"
                         style={{
-                          backgroundColor: first.soldierColor,
-                          color: fg,
-                          borderColor: first.soldierColor,
+                          backgroundImage:
+                            "repeating-linear-gradient(45deg, #e2e8f0 0, #e2e8f0 8px, #f1f5f9 8px, #f1f5f9 16px)",
                         }}
                       >
                         <div className="flex items-center gap-2">
-                          <Lock className="h-4 w-4 opacity-80" />
-                          <span className="text-sm font-medium">
-                            {first.soldierName}
-                          </span>
+                          <Lock className="h-5 w-5" />
+                          <span className="text-sm font-medium">משובץ</span>
                         </div>
                         <span className="font-mono text-sm">{timeLabel}</span>
                       </div>

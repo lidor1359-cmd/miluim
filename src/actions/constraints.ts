@@ -102,7 +102,6 @@ export async function getSoldierConstraintView(weekStart: Date) {
     hour: a.startHour,
     soldierName: a.soldier!.name,
     soldierColor: a.soldier!.color,
-    positionName: a.position.name,
   }));
 
   return {
