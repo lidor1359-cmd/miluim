@@ -8,8 +8,9 @@ import {
   DAYS_IN_WEEK,
 } from "@/lib/scheduler/types";
 import { Card } from "@/components/ui/card";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, X, Lock } from "lucide-react";
 import { format } from "date-fns";
+import { getContrastText } from "@/lib/colors";
 
 interface Props {
   form: ConstraintsForm;
@@ -92,10 +93,36 @@ export function MobileAccordion({ form, weekStartMs }: Props) {
               >
                 {SHIFT_HOURS.map((h) => {
                   const endH = (h + 4) % 24;
-                  const kind = form.prefs.get(keyOf(d.dayIndex, h));
                   const timeLabel = `${String(h).padStart(2, "0")}:00-${String(
                     endH
                   ).padStart(2, "0")}:00`;
+
+                  const locked = form.getLocked(d.dayIndex, h);
+                  if (locked && locked.length > 0) {
+                    const first = locked[0];
+                    const fg = getContrastText(first.soldierColor);
+                    return (
+                      <div
+                        key={h}
+                        className="flex h-14 w-full items-center justify-between gap-3 rounded-lg border-2 px-4"
+                        style={{
+                          backgroundColor: first.soldierColor,
+                          color: fg,
+                          borderColor: first.soldierColor,
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Lock className="h-4 w-4 opacity-80" />
+                          <span className="text-sm font-medium">
+                            {first.soldierName}
+                          </span>
+                        </div>
+                        <span className="font-mono text-sm">{timeLabel}</span>
+                      </div>
+                    );
+                  }
+
+                  const kind = form.prefs.get(keyOf(d.dayIndex, h));
                   const isBlack = kind === "BLACK";
 
                   const bgClass = isBlack

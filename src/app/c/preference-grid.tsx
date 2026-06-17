@@ -3,6 +3,7 @@
 import {
   useConstraintsForm,
   type PrefItem,
+  type LockedShift,
 } from "./use-constraints-form";
 import { DesktopGrid } from "./desktop-grid";
 import { MobileAccordion } from "./mobile-accordion";
@@ -21,6 +22,7 @@ interface Props {
   initialSubmittedAt: string | null;
   initialNote: string;
   limits: { maxGreen: number };
+  lockedShifts: LockedShift[];
 }
 
 export function PreferenceGrid(props: Props) {
@@ -31,6 +33,7 @@ export function PreferenceGrid(props: Props) {
     initialSubmitted: props.initialSubmitted,
     initialSubmittedAt: props.initialSubmittedAt,
     limits: props.limits,
+    lockedShifts: props.lockedShifts,
   });
 
   return (

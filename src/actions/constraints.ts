@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getWeekStart } from "@/lib/dates";
-import { SHIFT_HOURS } from "@/lib/scheduler/types";
+import { SHIFT_HOURS, getSlotStartMs, type ShiftHour } from "@/lib/scheduler/types";
 import { getCurrentSoldierId } from "@/lib/soldier-session";
 
 const MAX_GREEN = 10;
@@ -65,7 +65,7 @@ export async function getSoldierConstraintView(weekStart: Date) {
   const soldier = await getCurrentSoldier();
   if (!soldier) return null;
 
-  const [schedule, preferences, submission, note] = await Promise.all([
+  const [schedule, preferences, submission, note, lockedAssignments] = await Promise.all([
     prisma.schedule.findUnique({ where: { weekStartDate: ws } }),
     prisma.slotPreference.findMany({
       where: { soldierId: soldier.id, weekStartDate: ws },
@@ -86,7 +86,24 @@ export async function getSoldierConstraintView(weekStart: Date) {
         },
       },
     }),
+    prisma.assignment.findMany({
+      where: {
+        schedule: { weekStartDate: ws },
+        locked: true,
+        soldierId: { not: null },
+      },
+      include: { soldier: true, position: true },
+    }),
   ]);
+
+  const wsMs = ws.getTime();
+  const lockedShifts = lockedAssignments.map((a) => ({
+    dayIndex: Math.floor((a.date.getTime() - wsMs) / (24 * 60 * 60 * 1000)),
+    hour: a.startHour,
+    soldierName: a.soldier!.name,
+    soldierColor: a.soldier!.color,
+    positionName: a.position.name,
+  }));
 
   return {
     soldier: {
@@ -105,6 +122,7 @@ export async function getSoldierConstraintView(weekStart: Date) {
     submittedAt: submission?.submittedAt.toISOString() ?? null,
     note: note?.text ?? "",
     limits: { maxGreen: MAX_GREEN },
+    lockedShifts,
   };
 }
 
@@ -137,6 +155,21 @@ export async function togglePreference(
   });
   if (submission) {
     return { error: "כבר הגשת אילוצים סופית. בטל הגשה לפני עריכה" };
+  }
+
+  // Block toggling on cells that are already locked (pre-set in schedule)
+  const slotDate = new Date(getSlotStartMs(ws.getTime(), dayIndex, hour as ShiftHour));
+  const lockedHere = await prisma.assignment.findFirst({
+    where: {
+      schedule: { weekStartDate: ws },
+      date: slotDate,
+      startHour: hour,
+      locked: true,
+      soldierId: { not: null },
+    },
+  });
+  if (lockedHere) {
+    return { error: "המשמרת הזו כבר משובצת ולא ניתנת לסימון" };
   }
 
   const existing = await prisma.slotPreference.findUnique({

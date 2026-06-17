@@ -15,6 +15,14 @@ export interface PrefItem {
   kind: Kind;
 }
 
+export interface LockedShift {
+  dayIndex: number;
+  hour: number;
+  soldierName: string;
+  soldierColor: string;
+  positionName: string;
+}
+
 export interface ConstraintsFormInput {
   weekStartIso: string;
   constraintsState: string;
@@ -22,6 +30,7 @@ export interface ConstraintsFormInput {
   initialSubmitted: boolean;
   initialSubmittedAt: string | null;
   limits: { maxGreen: number };
+  lockedShifts: LockedShift[];
 }
 
 export function keyOf(dayIndex: number, hour: number): string {
@@ -45,6 +54,23 @@ export function useConstraintsForm(input: ConstraintsFormInput) {
     (v) => v === "BLACK"
   ).length;
 
+  // Map of locked cells: keyOf(d,h) -> array of LockedShift (could be multiple positions same cell)
+  const lockedByCell = new Map<string, LockedShift[]>();
+  for (const s of input.lockedShifts) {
+    const k = keyOf(s.dayIndex, s.hour);
+    const arr = lockedByCell.get(k);
+    if (arr) arr.push(s);
+    else lockedByCell.set(k, [s]);
+  }
+
+  function isLocked(dayIndex: number, hour: number): boolean {
+    return lockedByCell.has(keyOf(dayIndex, hour));
+  }
+
+  function getLocked(dayIndex: number, hour: number): LockedShift[] | undefined {
+    return lockedByCell.get(keyOf(dayIndex, hour));
+  }
+
   const editable = input.constraintsState === "OPEN" && !submitted;
   const stateLabel =
     input.constraintsState === "NOT_OPENED"
@@ -57,6 +83,7 @@ export function useConstraintsForm(input: ConstraintsFormInput) {
 
   function handleCellClick(dayIndex: number, hour: number) {
     if (!editable) return;
+    if (isLocked(dayIndex, hour)) return;
     const k = keyOf(dayIndex, hour);
     const current = prefs.get(k);
 
@@ -130,6 +157,8 @@ export function useConstraintsForm(input: ConstraintsFormInput) {
     handleCellClick,
     handleSubmit,
     handleUnsubmit,
+    isLocked,
+    getLocked,
   };
 }
 

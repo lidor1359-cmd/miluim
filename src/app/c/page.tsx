@@ -203,6 +203,7 @@ export default async function SoldierHomePage({ searchParams }: PageProps) {
             initialSubmittedAt={constraintsView.submittedAt}
             initialNote={constraintsView.note}
             limits={constraintsView.limits}
+            lockedShifts={constraintsView.lockedShifts}
           />
         ) : (
           <div className="rounded-lg bg-white p-6 text-center text-sm text-muted-foreground shadow">

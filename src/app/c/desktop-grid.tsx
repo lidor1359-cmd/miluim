@@ -7,8 +7,9 @@ import {
   DAYS_IN_WEEK,
 } from "@/lib/scheduler/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { X, Lock } from "lucide-react";
 import { format } from "date-fns";
+import { getContrastText } from "@/lib/colors";
 
 interface Props {
   form: ConstraintsForm;
@@ -58,6 +59,35 @@ export function DesktopGrid({ form, weekStartMs }: Props) {
                     {String(endH).padStart(2, "0")}
                   </td>
                   {days.map((d) => {
+                    const locked = form.getLocked(d.dayIndex, h);
+                    if (locked && locked.length > 0) {
+                      const first = locked[0];
+                      const fg = getContrastText(first.soldierColor);
+                      return (
+                        <td
+                          key={d.dayIndex}
+                          className="border p-0 cursor-not-allowed"
+                          title={locked
+                            .map(
+                              (l) => `${l.positionName}: ${l.soldierName}`
+                            )
+                            .join("\n")}
+                        >
+                          <div
+                            className="flex h-12 w-full flex-col items-center justify-center gap-0.5 px-1"
+                            style={{
+                              backgroundColor: first.soldierColor,
+                              color: fg,
+                            }}
+                          >
+                            <Lock className="h-3 w-3 opacity-70" />
+                            <span className="truncate text-[10px] font-medium leading-tight">
+                              {first.soldierName}
+                            </span>
+                          </div>
+                        </td>
+                      );
+                    }
                     const kind = form.prefs.get(keyOf(d.dayIndex, h));
                     const bg =
                       kind === "BLACK"
