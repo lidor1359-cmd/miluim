@@ -99,7 +99,7 @@ export function SoldierNoteBox({ weekStartIso, initialNote, editable }: Props) {
           disabled={!editable}
           placeholder={
             editable
-              ? "כתוב כאן הערות, בקשות או העדפות לפני הגשה (לדוגמה: עדיף לי לא בלילה, אני בקורס בשני בבוקר, וכו')..."
+              ? "כתוב כאן הערות, בקשות או העדפות לפני הגשה (לדוגמה: יש לי אירוע בשני בערב, אילוצים נקודתיים אחרים, וכו')..."
               : "אין הערות"
           }
           rows={4}
