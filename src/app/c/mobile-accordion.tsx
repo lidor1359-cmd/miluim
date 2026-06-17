@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  keyOf,
-  NAMED_LOCKED_SOLDIERS,
-  type ConstraintsForm,
-} from "./use-constraints-form";
+import { keyOf, type ConstraintsForm } from "./use-constraints-form";
 import {
   SHIFT_HOURS,
   DAY_NAMES_HE,
@@ -14,7 +10,6 @@ import {
 import { Card } from "@/components/ui/card";
 import { ChevronDown, X, Lock } from "lucide-react";
 import { format } from "date-fns";
-import { getContrastText } from "@/lib/colors";
 
 interface Props {
   form: ConstraintsForm;
@@ -101,33 +96,7 @@ export function MobileAccordion({ form, weekStartMs }: Props) {
                     endH
                   ).padStart(2, "0")}:00`;
 
-                  const locked = form.getLocked(d.dayIndex, h);
-                  if (locked && locked.length > 0) {
-                    const named = locked.find((l) =>
-                      NAMED_LOCKED_SOLDIERS.has(l.soldierName)
-                    );
-                    if (named) {
-                      const fg = getContrastText(named.soldierColor);
-                      return (
-                        <div
-                          key={h}
-                          className="flex h-14 w-full items-center justify-between gap-3 rounded-lg border-2 px-4"
-                          style={{
-                            backgroundColor: named.soldierColor,
-                            color: fg,
-                            borderColor: named.soldierColor,
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Lock className="h-4 w-4 opacity-80" />
-                            <span className="text-sm font-medium">
-                              {named.soldierName}
-                            </span>
-                          </div>
-                          <span className="font-mono text-sm">{timeLabel}</span>
-                        </div>
-                      );
-                    }
+                  if (form.isLocked(d.dayIndex, h)) {
                     return (
                       <div
                         key={h}

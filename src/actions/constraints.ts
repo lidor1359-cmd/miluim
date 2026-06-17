@@ -92,17 +92,18 @@ export async function getSoldierConstraintView(weekStart: Date) {
         locked: true,
         soldierId: { not: null },
       },
-      include: { soldier: true, position: true },
     }),
   ]);
 
   const wsMs = ws.getTime();
-  const lockedShifts = lockedAssignments.map((a) => ({
-    dayIndex: Math.floor((a.date.getTime() - wsMs) / (24 * 60 * 60 * 1000)),
-    hour: a.startHour,
-    soldierName: a.soldier!.name,
-    soldierColor: a.soldier!.color,
-  }));
+  // Only surface locked cells on the overlap day (dayIndex 0 of the week being viewed),
+  // since that day equals the last day of the previously-published week.
+  const lockedShifts = lockedAssignments
+    .map((a) => ({
+      dayIndex: Math.floor((a.date.getTime() - wsMs) / (24 * 60 * 60 * 1000)),
+      hour: a.startHour,
+    }))
+    .filter((s) => s.dayIndex === 0);
 
   return {
     soldier: {
@@ -156,19 +157,22 @@ export async function togglePreference(
     return { error: "כבר הגשת אילוצים סופית. בטל הגשה לפני עריכה" };
   }
 
-  // Block toggling on cells that are already locked (pre-set in schedule)
-  const slotDate = new Date(getSlotStartMs(ws.getTime(), dayIndex, hour as ShiftHour));
-  const lockedHere = await prisma.assignment.findFirst({
-    where: {
-      schedule: { weekStartDate: ws },
-      date: slotDate,
-      startHour: hour,
-      locked: true,
-      soldierId: { not: null },
-    },
-  });
-  if (lockedHere) {
-    return { error: "המשמרת הזו כבר משובצת ולא ניתנת לסימון" };
+  // Block toggling on the overlap day (dayIndex 0) if there are any locked
+  // assignments there (= already-published shifts from previous week).
+  if (dayIndex === 0) {
+    const slotDate = new Date(getSlotStartMs(ws.getTime(), dayIndex, hour as ShiftHour));
+    const lockedHere = await prisma.assignment.findFirst({
+      where: {
+        schedule: { weekStartDate: ws },
+        date: slotDate,
+        startHour: hour,
+        locked: true,
+        soldierId: { not: null },
+      },
+    });
+    if (lockedHere) {
+      return { error: "המשמרת הזו כבר משובצת ולא ניתנת לסימון" };
+    }
   }
 
   const existing = await prisma.slotPreference.findUnique({

@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  keyOf,
-  NAMED_LOCKED_SOLDIERS,
-  type ConstraintsForm,
-} from "./use-constraints-form";
+import { keyOf, type ConstraintsForm } from "./use-constraints-form";
 import {
   SHIFT_HOURS,
   DAY_NAMES_HE,
@@ -13,7 +9,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X, Lock } from "lucide-react";
 import { format } from "date-fns";
-import { getContrastText } from "@/lib/colors";
 
 interface Props {
   form: ConstraintsForm;
@@ -63,34 +58,7 @@ export function DesktopGrid({ form, weekStartMs }: Props) {
                     {String(endH).padStart(2, "0")}
                   </td>
                   {days.map((d) => {
-                    const locked = form.getLocked(d.dayIndex, h);
-                    if (locked && locked.length > 0) {
-                      const named = locked.find((l) =>
-                        NAMED_LOCKED_SOLDIERS.has(l.soldierName)
-                      );
-                      if (named) {
-                        const fg = getContrastText(named.soldierColor);
-                        return (
-                          <td
-                            key={d.dayIndex}
-                            className="border p-0 cursor-not-allowed"
-                            title={named.soldierName}
-                          >
-                            <div
-                              className="flex h-12 w-full flex-col items-center justify-center gap-0.5 px-1"
-                              style={{
-                                backgroundColor: named.soldierColor,
-                                color: fg,
-                              }}
-                            >
-                              <Lock className="h-3 w-3 opacity-70" />
-                              <span className="truncate text-[10px] font-medium leading-tight">
-                                {named.soldierName}
-                              </span>
-                            </div>
-                          </td>
-                        );
-                      }
+                    if (form.isLocked(d.dayIndex, h)) {
                       return (
                         <td
                           key={d.dayIndex}

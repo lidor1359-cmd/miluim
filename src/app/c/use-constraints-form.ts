@@ -18,11 +18,7 @@ export interface PrefItem {
 export interface LockedShift {
   dayIndex: number;
   hour: number;
-  soldierName: string;
-  soldierColor: string;
 }
-
-export const NAMED_LOCKED_SOLDIERS = new Set<string>(["כיפת ברזל"]);
 
 export interface ConstraintsFormInput {
   weekStartIso: string;
