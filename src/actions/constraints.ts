@@ -96,14 +96,27 @@ export async function getSoldierConstraintView(weekStart: Date) {
   ]);
 
   const wsMs = ws.getTime();
-  // Only surface locked cells on the overlap day (dayIndex 0 of the week being viewed),
-  // since that day equals the last day of the previously-published week.
-  const lockedShifts = lockedAssignments
+  // Block the entire overlap day (dayIndex 0) — already scheduled from previous week.
+  // Also include any individually locked cells on that day for completeness.
+  const lockedAssignmentsOnDay0 = lockedAssignments
     .map((a) => ({
       dayIndex: Math.floor((a.date.getTime() - wsMs) / (24 * 60 * 60 * 1000)),
       hour: a.startHour,
     }))
     .filter((s) => s.dayIndex === 0);
+
+  const lockedShiftsSet = new Map<number, Set<number>>();
+  for (const s of lockedAssignmentsOnDay0) {
+    const set = lockedShiftsSet.get(s.dayIndex);
+    if (set) set.add(s.hour);
+    else lockedShiftsSet.set(s.dayIndex, new Set([s.hour]));
+  }
+
+  // Ensure every slot on day 0 is locked
+  const lockedShifts: { dayIndex: number; hour: number }[] = [];
+  for (const h of SHIFT_HOURS) {
+    lockedShifts.push({ dayIndex: 0, hour: h });
+  }
 
   return {
     soldier: {
@@ -157,22 +170,10 @@ export async function togglePreference(
     return { error: "כבר הגשת אילוצים סופית. בטל הגשה לפני עריכה" };
   }
 
-  // Block toggling on the overlap day (dayIndex 0) if there are any locked
-  // assignments there (= already-published shifts from previous week).
+  // Block toggling on the overlap day (dayIndex 0) entirely — this day is
+  // already scheduled from the previous week and soldiers can't submit constraints for it.
   if (dayIndex === 0) {
-    const slotDate = new Date(getSlotStartMs(ws.getTime(), dayIndex, hour as ShiftHour));
-    const lockedHere = await prisma.assignment.findFirst({
-      where: {
-        schedule: { weekStartDate: ws },
-        date: slotDate,
-        startHour: hour,
-        locked: true,
-        soldierId: { not: null },
-      },
-    });
-    if (lockedHere) {
-      return { error: "המשמרת הזו כבר משובצת ולא ניתנת לסימון" };
-    }
+    return { error: "יום זה כבר משובץ ולא ניתן לסימון אילוצים" };
   }
 
   const existing = await prisma.slotPreference.findUnique({
