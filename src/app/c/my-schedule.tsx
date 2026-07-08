@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { format, addDays } from "date-fns";
+import { addDays } from "date-fns";
+import { formatWeekStartParam, formatDateHe, formatDayMonthHe } from "@/lib/dates";
 import { ChevronRight, ChevronLeft, CalendarDays } from "lucide-react";
 import {
   DAY_NAMES_HE,
@@ -47,6 +48,8 @@ function fmtRange(h: number) {
 export function MySchedule({ view, soldier, prevWeekIso, nextWeekIso }: Props) {
   const weekStart = new Date(view.weekStartIso);
   const weekEnd = addDays(weekStart, 7);
+  const prevWeekParam = prevWeekIso ? formatWeekStartParam(new Date(prevWeekIso)) : null;
+  const nextWeekParam = nextWeekIso ? formatWeekStartParam(new Date(nextWeekIso)) : null;
 
   const positionById = new Map(view.positions.map((p) => [p.id, p.name]));
 
@@ -66,7 +69,7 @@ export function MySchedule({ view, soldier, prevWeekIso, nextWeekIso }: Props) {
           <div>
             {prevWeekIso ? (
               <Link
-                href={`/c?tab=schedule&week=${prevWeekIso.slice(0, 10)}`}
+                href={`/c?tab=schedule&week=${prevWeekParam}`}
                 className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -85,13 +88,13 @@ export function MySchedule({ view, soldier, prevWeekIso, nextWeekIso }: Props) {
               <span>שבוע</span>
             </div>
             <div className="text-sm font-semibold">
-              {format(weekStart, "dd/MM")} – {format(weekEnd, "dd/MM/yyyy")}
+              {formatDateHe(weekStart)} – {formatDateHe(weekEnd)}
             </div>
           </div>
           <div>
             {nextWeekIso ? (
               <Link
-                href={`/c?tab=schedule&week=${nextWeekIso.slice(0, 10)}`}
+                href={`/c?tab=schedule&week=${nextWeekParam}`}
                 className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50"
               >
                 שבוע הבא
@@ -137,7 +140,7 @@ export function MySchedule({ view, soldier, prevWeekIso, nextWeekIso }: Props) {
                         {DAY_NAMES_HE[s.dayIndex]}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        ({format(d, "dd/MM")})
+                        ({formatDayMonthHe(d)})
                       </span>
                     </div>
                     <div className="flex items-center gap-3">

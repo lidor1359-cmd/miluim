@@ -1,7 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { parseWeekStartParam, formatWeekStartParam, getDayDate } from "@/lib/dates";
-import { addDays, format } from "date-fns";
+import {
+  parseWeekStartParam,
+  formatWeekStartParam,
+  getDayDate,
+  formatDateHe,
+  formatDayMonthHe,
+} from "@/lib/dates";
+import { addDays } from "date-fns";
 import { getScheduleData } from "@/actions/schedule";
 import { ScheduleBuilder } from "./schedule-builder";
 import { Button } from "@/components/ui/button";
@@ -33,7 +39,7 @@ export default async function ScheduleWeekPage({
             שבצ&quot;ק שבועי
           </h1>
           <p className="text-muted-foreground">
-            {format(weekStart, "dd/MM/yyyy")} - {format(endDate, "dd/MM/yyyy")}
+            {formatDateHe(weekStart)} - {formatDateHe(endDate)}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -73,7 +79,7 @@ export default async function ScheduleWeekPage({
           return {
             dayIndex: i,
             name: DAY_NAMES_HE[i],
-            label: format(d, "dd/MM"),
+            label: formatDayMonthHe(d),
             iso: d.toISOString(),
           };
         })}

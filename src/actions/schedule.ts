@@ -9,7 +9,7 @@ import {
   ShiftHour,
   getSlotStartMs,
 } from "@/lib/scheduler/types";
-import { getWeekStart } from "@/lib/dates";
+import { getWeekStart, formatWeekStartParam } from "@/lib/dates";
 
 export async function getOrCreateSchedule(weekStart: Date) {
   const ws = getWeekStart(weekStart);
@@ -81,7 +81,7 @@ export async function setAssignment(
       soldierId,
     },
   });
-  revalidatePath(`/admin/schedule/${weekStartIso.slice(0, 10)}`);
+  revalidatePath(`/admin/schedule/${formatWeekStartParam(new Date(weekStartIso))}`);
   return { success: true };
 }
 
@@ -200,7 +200,7 @@ export async function autoGenerate(scheduleId: string, weekStartIso: string) {
 
   await prisma.assignment.createMany({ data });
 
-  revalidatePath(`/admin/schedule/${weekStartIso.slice(0, 10)}`);
+  revalidatePath(`/admin/schedule/${formatWeekStartParam(new Date(weekStartIso))}`);
   return {
     success: refined.success,
     stats: refined.stats,
@@ -211,7 +211,7 @@ export async function autoGenerate(scheduleId: string, weekStartIso: string) {
 
 export async function clearSchedule(scheduleId: string, weekStartIso: string) {
   await prisma.assignment.deleteMany({ where: { scheduleId } });
-  revalidatePath(`/admin/schedule/${weekStartIso.slice(0, 10)}`);
+  revalidatePath(`/admin/schedule/${formatWeekStartParam(new Date(weekStartIso))}`);
   return { success: true };
 }
 
@@ -235,7 +235,7 @@ export async function setAssignmentLock(
     },
     data: { locked },
   });
-  revalidatePath(`/admin/schedule/${weekStartIso.slice(0, 10)}`);
+  revalidatePath(`/admin/schedule/${formatWeekStartParam(new Date(weekStartIso))}`);
   return { success: true };
 }
 
@@ -244,7 +244,7 @@ export async function lockAllFilled(scheduleId: string, weekStartIso: string) {
     where: { scheduleId, soldierId: { not: null } },
     data: { locked: true },
   });
-  revalidatePath(`/admin/schedule/${weekStartIso.slice(0, 10)}`);
+  revalidatePath(`/admin/schedule/${formatWeekStartParam(new Date(weekStartIso))}`);
   return { success: true, count: res.count };
 }
 
@@ -253,7 +253,7 @@ export async function unlockAll(scheduleId: string, weekStartIso: string) {
     where: { scheduleId, locked: true },
     data: { locked: false },
   });
-  revalidatePath(`/admin/schedule/${weekStartIso.slice(0, 10)}`);
+  revalidatePath(`/admin/schedule/${formatWeekStartParam(new Date(weekStartIso))}`);
   return { success: true, count: res.count };
 }
 
@@ -262,7 +262,7 @@ export async function publishSchedule(scheduleId: string, weekStartIso: string) 
     where: { id: scheduleId },
     data: { status: "PUBLISHED" },
   });
-  revalidatePath(`/admin/schedule/${weekStartIso.slice(0, 10)}`);
+  revalidatePath(`/admin/schedule/${formatWeekStartParam(new Date(weekStartIso))}`);
   revalidatePath("/c");
   return { success: true };
 }
