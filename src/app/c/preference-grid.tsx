@@ -55,10 +55,10 @@ export function PreferenceGrid(props: Props) {
             </span>
             <span className="text-xs font-medium text-slate-700">
               לתאריכים:{" "}
-              {format(new Date(props.weekStartMs), "dd/MM")}
+              {format(new Date(props.weekStartMs + 3 * 60 * 60 * 1000), "dd/MM")}
               {" - "}
               {format(
-                new Date(props.weekStartMs + 7 * 24 * 60 * 60 * 1000),
+                new Date(props.weekStartMs + 7 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
                 "dd/MM"
               )}
             </span>

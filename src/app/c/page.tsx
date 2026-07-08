@@ -25,6 +25,7 @@ interface PageProps {
 /**
  * Returns the OPEN constraint week's date range string (e.g. "14/06 - 20/06"),
  * or null if there is no OPEN window.
+ * Uses UTC date parts to avoid timezone shifts on the server.
  */
 async function getOpenConstraintRangeLabel(): Promise<string | null> {
   const open = await prisma.schedule.findFirst({
@@ -34,7 +35,10 @@ async function getOpenConstraintRangeLabel(): Promise<string | null> {
   if (!open) return null;
   const start = open.weekStartDate;
   const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
-  return `${format(start, "dd/MM")} - ${format(end, "dd/MM")}`;
+  // Format using UTC parts so the date matches the stored Israel midnight
+  const fmt = (d: Date) =>
+    `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  return `${fmt(start)} - ${fmt(end)}`;
 }
 
 function UnauthLanding({
