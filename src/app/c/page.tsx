@@ -9,7 +9,7 @@ import {
   getAdjacentPublishedWeek,
   getSoldierScheduleView,
 } from "@/actions/schedule";
-import { getWeekStart } from "@/lib/dates";
+import { formatDayMonthHe, getWeekStart } from "@/lib/dates";
 import { format } from "date-fns";
 import { PreferenceGrid } from "./preference-grid";
 import { IdentifyForm } from "./identify-form";
@@ -35,10 +35,9 @@ async function getOpenConstraintRangeLabel(): Promise<string | null> {
   if (!open) return null;
   const start = open.weekStartDate;
   const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
-  // Format using UTC parts so the date matches the stored Israel midnight
-  const fmt = (d: Date) =>
-    `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-  return `${fmt(start)} - ${fmt(end)}`;
+  // Format in Israel time — weekStartDate is stored as Israel midnight (21:00Z),
+  // so UTC parts would land on the previous day.
+  return `${formatDayMonthHe(start)} - ${formatDayMonthHe(end)}`;
 }
 
 function UnauthLanding({
